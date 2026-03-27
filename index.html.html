@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>喫茶旅 — Kissa Tabi · Japanese Cafe Discovery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Zen+Kaku+Gothic+New:wght@300;400&family=Noto+Serif+JP:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #fdf6ec;
+    --petal: #f7d6d0;
+    --blush: #e8a598;
+    --bark: #7a5c4a;
+    --moss: #7a8c6e;
+    --twilight: #3d2b4a;
+    --gold: #c9a96e;
+    --ink: #2a1f1a;
+    --mist: rgba(255,255,255,0.12);
+    --glass: rgba(255,255,255,0.18);
+    --glass-border: rgba(255,255,255,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    width: 12px; height: 12px;
+    background: var(--blush);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none; z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s, background 0.3s;
+    mix-blend-mode: multiply;
+  }
+  .cursor-ring {
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--blush);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none; z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.18s ease, width 0.3s, height 0.3s;
+    opacity: 0.5;
+  }
+
+  /* ===== HERO ===== */
+  .hero {
+    height: 100vh;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Sky layers */
+  .sky-layer {
+    position: absolute; inset: 0;
+    transition: opacity 1.2s ease;
+  }
+  .sky-dawn {
+    background: linear-gradient(180deg,
+      #fce4cf 0%, #f9c9b0 25%, #f7d6c2 50%, #fce8d5 75%, #fdf6ec 100%);
+    opacity: 1;
+  }
+  .sky-day {
+    background: linear-gradient(180deg,
+      #aed6f1 0%, #d4eaf7 30%, #fce8d5 65%, #fdf6ec 100%);
+    opacity: 0;
+  }
+  .sky-sunset {
+    background: linear-gradient(180deg,
+      #2c1654 0%, #6d3b8a 20%, #c0392b 40%, #e67e22 60%, #f39c12 80%, #fdf6ec 100%);
+    opacity: 0;
+  }
+  .sky-night {
+    background: linear-gradient(180deg,
+      #0a0a1a 0%, #1a1035 30%, #2d1b4e 60%, #3d2b4a 80%, #fdf6ec 100%);
+    opacity: 0;
+  }
+
+  /* Mountains (parallax) */
+  .mountain-far {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 55%;
+    will-change: transform;
+  }
+  .mountain-mid {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 45%;
+    will-change: transform;
+  }
+  .mountain-near {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 30%;
+    will-change: transform;
+  }
+
+  /* Particle canvas */
+  #particle-canvas {
+    position: absolute; inset: 0;
+    pointer-events: none; z-index: 10;
+  }
+
+  /* Hero content */
+  .hero-content {
+    position: relative; z-index: 20;
+    text-align: center;
+    padding: 2rem;
+  }
+  .hero-jp {
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    color: var(--bark);
+    letter-spacing: 0.3em;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 1.2s 0.3s forwards;
+  }
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3rem, 8vw, 7rem);
+    color: var(--ink);
+    line-height: 1.05;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeUp 1.2s 0.6s forwards;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--bark);
+  }
+  .hero-sub {
+    font-size: clamp(0.85rem, 1.5vw, 1rem);
+    color: var(--bark);
+    letter-spacing: 0.15em;
+    margin-top: 1.2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 1.2s 0.9s forwards;
+  }
+  .hero-scroll {
+    margin-top: 3rem;
+    opacity: 0;
+    animation: fadeUp 1.2s 1.4s forwards;
+  }
+  .scroll-indicator {
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    color: var(--bark); font-size: 0.7rem; letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .scroll-line {
+    width: 1px; height: 60px;
+    background: linear-gradient(to bottom, var(--bark), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+
+  /* ===== NAV ===== */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    padding: 1.2rem 3rem;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: background 0.5s, backdrop-filter 0.5s;
+  }
+  nav.scrolled {
+    background: rgba(253, 246, 236, 0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(122, 92, 74, 0.1);
+  }
+  .nav-logo {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 1.2rem;
+    color: var(--bark);
+    letter-spacing: 0.1em;
+    text-decoration: none;
+  }
+  .nav-logo span { font-family: 'Playfair Display', serif; font-style: italic; font-size: 0.9rem; }
+  .nav-links {
+    display: flex; gap: 2rem; list-style: none;
+  }
+  .nav-links a {
+    color: var(--bark); text-decoration: none; font-size: 0.8rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    position: relative; transition: color 0.3s;
+  }
+  .nav-links a::after {
+    content: ''; position: absolute; bottom: -3px; left: 0;
+    width: 0; height: 1px; background: var(--blush);
+    transition: width 0.3s;
+  }
+  .nav-links a:hover::after { width: 100%; }
+  .nav-music {
+    background: none; border: 1px solid var(--bark);
+    color: var(--bark); padding: 0.4rem 1.2rem;
+    border-radius: 20px; cursor: none;
+    font-size: 0.75rem; letter-spacing: 0.1em;
+    transition: all 0.3s;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+  }
+  .nav-music:hover {
+    background: var(--bark); color: var(--cream);
+  }
+  .nav-music.playing { background: var(--bark); color: var(--cream); }
+
+  /* ===== SEARCH ===== */
+  .search-section {
+    padding: 4rem 3rem 2rem;
+    max-width: 900px; margin: 0 auto;
+    text-align: center;
+  }
+  .search-wrap {
+    position: relative; display: inline-flex;
+    align-items: center; width: 100%; max-width: 600px;
+  }
+  .search-input {
+    width: 100%; padding: 1rem 3.5rem 1rem 1.8rem;
+    border: 1px solid rgba(122,92,74,0.25);
+    border-radius: 50px;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(10px);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 0.95rem; color: var(--ink);
+    outline: none; transition: border 0.3s, box-shadow 0.3s;
+  }
+  .search-input::placeholder { color: rgba(122,92,74,0.5); }
+  .search-input:focus {
+    border-color: var(--blush);
+    box-shadow: 0 0 0 3px rgba(232,165,152,0.15);
+  }
+  .search-icon {
+    position: absolute; right: 1.2rem;
+    color: var(--bark); font-size: 1rem; pointer-events: none;
+  }
+
+  /* Filter pills */
+  .filters {
+    display: flex; flex-wrap: wrap; gap: 0.6rem;
+    justify-content: center; margin-top: 1.5rem;
+  }
+  .filter-pill {
+    padding: 0.4rem 1.2rem;
+    border: 1px solid rgba(122,92,74,0.3);
+    border-radius: 20px; background: transparent;
+    color: var(--bark); font-size: 0.78rem;
+    letter-spacing: 0.05em; cursor: none;
+    transition: all 0.3s;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+  }
+  .filter-pill:hover, .filter-pill.active {
+    background: var(--bark); color: var(--cream);
+    border-color: var(--bark);
+  }
+
+  /* ===== SECTION HEADERS ===== */
+  .section-header {
+    padding: 5rem 3rem 2rem;
+    max-width: 1400px; margin: 0 auto;
+    display: flex; align-items: baseline; gap: 1.5rem;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    color: var(--ink);
+  }
+  .section-title em { color: var(--bark); font-style: italic; }
+  .section-jp {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 0.85rem; color: var(--blush);
+    letter-spacing: 0.2em;
+  }
+  .section-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(to right, rgba(122,92,74,0.2), transparent);
+  }
+
+  /* ===== CAFE GRID ===== */
+  .cafe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 2rem;
+    padding: 0 3rem 4rem;
+    max-width: 1400px; margin: 0 auto;
+  }
+  .cafe-grid.featured {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .cafe-grid.featured .cafe-card:first-child {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+
+  /* ===== CAFE CARD ===== */
+  .cafe-card {
+    position: relative;
+    border-radius: 20px; overflow: hidden;
+    background: white;
+    cursor: none;
+    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1),
+                box-shadow 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    will-change: transform;
+  }
+  .cafe-card:hover {
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 30px 80px rgba(122, 92, 74, 0.2),
+                0 10px 30px rgba(122, 92, 74, 0.1);
+  }
+  .card-img-wrap {
+    position: relative; overflow: hidden;
+    height: 220px;
+  }
+  .cafe-card:first-child .card-img-wrap { height: 100%; min-height: 380px; }
+  .card-img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .cafe-card:hover .card-img { transform: scale(1.08); }
+
+  .card-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(26,15,10,0.7) 0%, transparent 60%);
+    transition: opacity 0.3s;
+  }
+  .card-save {
+    position: absolute; top: 1rem; right: 1rem;
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: none;
+    transition: all 0.3s;
+    font-size: 1rem;
+    color: white;
+  }
+  .card-save:hover, .card-save.saved { background: rgba(232,165,152,0.8); }
+  .card-tags-overlay {
+    position: absolute; bottom: 1rem; left: 1rem;
+    display: flex; gap: 0.4rem; flex-wrap: wrap;
+  }
+  .tag {
+    padding: 0.2rem 0.7rem;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px;
+    color: white; font-size: 0.65rem; letter-spacing: 0.08em;
+  }
+  .card-body {
+    padding: 1.4rem;
+  }
+  .card-location {
+    font-size: 0.7rem; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--blush);
+    margin-bottom: 0.4rem;
+  }
+  .card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem; color: var(--ink);
+    margin-bottom: 0.6rem;
+    line-height: 1.3;
+  }
+  .card-desc {
+    font-size: 0.82rem; color: rgba(42,31,26,0.65);
+    line-height: 1.7; margin-bottom: 1rem;
+  }
+  .card-meta {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .card-rating {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.8rem; color: var(--gold);
+  }
+  .card-time {
+    font-size: 0.72rem; color: rgba(42,31,26,0.5);
+    letter-spacing: 0.05em;
+  }
+  .card-actions {
+    display: flex; gap: 0.7rem;
+  }
+  .btn-explore {
+    flex: 1; padding: 0.65rem;
+    background: var(--bark); color: var(--cream);
+    border: none; border-radius: 10px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 0.8rem; letter-spacing: 0.1em;
+    cursor: none; transition: all 0.3s;
+  }
+  .btn-explore:hover { background: var(--ink); }
+  .btn-navigate {
+    padding: 0.65rem 1rem;
+    background: transparent;
+    border: 1px solid rgba(122,92,74,0.3);
+    border-radius: 10px; color: var(--bark);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 0.8rem; cursor: none;
+    transition: all 0.3s;
+  }
+  .btn-navigate:hover {
+    border-color: var(--bark);
+    background: rgba(122,92,74,0.08);
+  }
+
+  /* ===== HIDDEN GEMS MARQUEE ===== */
+  .marquee-section {
+    padding: 3rem 0;
+    background: var(--bark);
+    overflow: hidden;
+    position: relative;
+  }
+  .marquee-wrap {
+    display: flex; gap: 0;
+    animation: marquee 30s linear infinite;
+    white-space: nowrap;
+  }
+  .marquee-item {
+    display: inline-flex; align-items: center; gap: 1.5rem;
+    padding: 0 3rem;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.4rem; color: rgba(253,246,236,0.6);
+    flex-shrink: 0;
+  }
+  .marquee-dot { width: 5px; height: 5px; background: var(--blush); border-radius: 50%; }
+
+  /* ===== SEASONAL SECTION ===== */
+  .seasonal-section {
+    position: relative;
+    padding: 6rem 3rem;
+    overflow: hidden;
+  }
+  .seasonal-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #fce4cf 0%, #f7d0c8 50%, #f0e6d3 100%);
+    opacity: 0.5;
+  }
+  .seasonal-content {
+    position: relative; z-index: 2;
+    max-width: 1400px; margin: 0 auto;
+  }
+  .seasonal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem; margin-top: 3rem;
+  }
+  .seasonal-card {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px; overflow: hidden;
+    transition: transform 0.4s cubic-bezier(0.23,1,0.32,1);
+    cursor: none;
+  }
+  .seasonal-card:hover { transform: translateY(-6px); }
+  .seasonal-card-img { width: 100%; height: 200px; object-fit: cover; }
+  .seasonal-card-body { padding: 1.5rem; }
+  .seasonal-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(232,165,152,0.2);
+    border: 1px solid rgba(232,165,152,0.4);
+    color: var(--bark); font-size: 0.7rem;
+    padding: 0.25rem 0.8rem; border-radius: 20px;
+    margin-bottom: 0.8rem; letter-spacing: 0.1em;
+  }
+
+  /* ===== MODAL ===== */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 2000;
+    background: rgba(26,15,10,0.75);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s;
+    padding: 2rem;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--cream);
+    border-radius: 24px; overflow: hidden;
+    max-width: 750px; width: 100%;
+    max-height: 90vh; overflow-y: auto;
+    transform: translateY(30px) scale(0.97);
+    transition: transform 0.4s cubic-bezier(0.23,1,0.32,1);
+    position: relative;
+  }
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+  .modal-img { width: 100%; height: 320px; object-fit: cover; }
+  .modal-body { padding: 2.5rem; }
+  .modal-close {
+    position: absolute; top: 1.2rem; right: 1.2rem;
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;
+    color: white; font-size: 1.1rem; cursor: none;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.3s;
+  }
+  .modal-close:hover { background: rgba(255,255,255,0.4); }
+  .modal-location { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--blush); margin-bottom: 0.5rem; }
+  .modal-name { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--ink); margin-bottom: 1rem; }
+  .modal-desc { color: rgba(42,31,26,0.7); line-height: 1.8; margin-bottom: 1.5rem; }
+  .modal-info { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+  .modal-info-item label { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--blush); display: block; margin-bottom: 0.3rem; }
+  .modal-info-item span { font-size: 0.9rem; color: var(--ink); }
+  .modal-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2rem; }
+  .modal-tag { padding: 0.3rem 0.9rem; border: 1px solid rgba(122,92,74,0.25); border-radius: 20px; font-size: 0.75rem; color: var(--bark); }
+  .modal-actions { display: flex; gap: 1rem; }
+  .modal-btn { flex: 1; padding: 0.8rem; border-radius: 12px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 0.85rem; letter-spacing: 0.08em; cursor: none; transition: all 0.3s; border: none; }
+  .modal-btn-primary { background: var(--bark); color: var(--cream); }
+  .modal-btn-primary:hover { background: var(--ink); }
+  .modal-btn-secondary { background: transparent; border: 1px solid rgba(122,92,74,0.3); color: var(--bark); }
+  .modal-btn-secondary:hover { background: rgba(122,92,74,0.08); }
+
+  /* ===== FOOTER ===== */
+  footer {
+    background: var(--ink); color: rgba(253,246,236,0.6);
+    padding: 4rem 3rem 2rem;
+    text-align: center;
+  }
+  .footer-logo {
+    font-family: 'Playfair Display', serif;
+    font-style: italic; font-size: 2rem;
+    color: var(--cream); margin-bottom: 0.5rem;
+  }
+  .footer-jp {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 0.8rem; letter-spacing: 0.3em; color: var(--blush);
+    margin-bottom: 2rem;
+  }
+  .footer-links { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem; }
+  .footer-links a { color: rgba(253,246,236,0.5); text-decoration: none; font-size: 0.8rem; letter-spacing: 0.1em; transition: color 0.3s; }
+  .footer-links a:hover { color: var(--blush); }
+  .footer-copy { font-size: 0.72rem; color: rgba(253,246,236,0.25); margin-top: 2rem; }
+
+  /* ===== KEYFRAMES ===== */
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 1; transform: scaleY(1); }
+    50% { opacity: 0.4; transform: scaleY(0.7); }
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes floatPetal {
+    0% { transform: translateY(-10px) rotate(0deg) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 0.7; }
+    100% { transform: translateY(110vh) rotate(720deg) translateX(80px); opacity: 0; }
+  }
+
+  /* ===== FADE-IN ON SCROLL ===== */
+  .fade-in {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .fade-in.visible {
+    opacity: 1; transform: translateY(0);
+  }
+
+  /* Stagger children */
+  .stagger > * { opacity: 0; transform: translateY(25px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .stagger.visible > *:nth-child(1) { opacity: 1; transform: none; transition-delay: 0s; }
+  .stagger.visible > *:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.1s; }
+  .stagger.visible > *:nth-child(3) { opacity: 1; transform: none; transition-delay: 0.2s; }
+  .stagger.visible > *:nth-child(4) { opacity: 1; transform: none; transition-delay: 0.3s; }
+  .stagger.visible > *:nth-child(5) { opacity: 1; transform: none; transition-delay: 0.4s; }
+  .stagger.visible > *:nth-child(6) { opacity: 1; transform: none; transition-delay: 0.5s; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 900px) {
+    .cafe-grid.featured { grid-template-columns: 1fr 1fr; }
+    .cafe-grid.featured .cafe-card:first-child { grid-column: span 2; grid-row: span 1; }
+    .seasonal-grid { grid-template-columns: 1fr; }
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    .cafe-grid, .search-section, .section-header { padding-left: 1.5rem; padding-right: 1.5rem; }
+  }
+  @media (max-width: 600px) {
+    .cafe-grid, .cafe-grid.featured { grid-template-columns: 1fr; }
+    .cafe-grid.featured .cafe-card:first-child { grid-column: span 1; }
+    .modal-info { grid-template-columns: 1fr; }
+  }
+
+  /* Audio hint */
+  .audio-toast {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: rgba(42,31,26,0.9); backdrop-filter: blur(10px);
+    color: var(--cream); padding: 0.8rem 2rem;
+    border-radius: 50px; font-size: 0.8rem; letter-spacing: 0.1em;
+    z-index: 500; transition: transform 0.5s cubic-bezier(0.23,1,0.32,1);
+    white-space: nowrap;
+  }
+  .audio-toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Sky transition indicator */
+  .sky-indicator {
+    position: fixed; right: 1.5rem; top: 50%;
+    transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 0.5rem;
+    z-index: 100;
+  }
+  .sky-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(122,92,74,0.3);
+    transition: background 0.5s, transform 0.3s;
+    cursor: none;
+  }
+  .sky-dot.active { background: var(--bark); transform: scale(1.5); }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Audio (no autoplay) -->
+<audio id="bgMusic" loop>
+  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+</audio>
+
+<!-- Toast -->
+<div class="audio-toast" id="audioToast">♪ Ambient music enabled · LoFi Jazz</div>
+
+<!-- Sky phase indicator -->
+<div class="sky-indicator">
+  <div class="sky-dot active" data-phase="0" title="Dawn"></div>
+  <div class="sky-dot" data-phase="1" title="Day"></div>
+  <div class="sky-dot" data-phase="2" title="Sunset"></div>
+  <div class="sky-dot" data-phase="3" title="Night"></div>
+</div>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <a href="#" class="nav-logo">喫茶旅 <span>Kissa Tabi</span></a>
+  <ul class="nav-links">
+    <li><a href="#featured">Featured</a></li>
+    <li><a href="#hidden">Hidden Gems</a></li>
+    <li><a href="#seasonal">Seasonal</a></li>
+    <li><a href="#countryside">Countryside</a></li>
+  </ul>
+  <button class="nav-music" id="musicToggle">♪ Ambience</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="sky-layer sky-dawn" id="skyDawn"></div>
+  <div class="sky-layer sky-day" id="skyDay"></div>
+  <div class="sky-layer sky-sunset" id="skySunset"></div>
+  <div class="sky-layer sky-night" id="skyNight"></div>
+
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- SVG mountains -->
+  <svg class="mountain-far" viewBox="0 0 1440 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,400 L0,200 L120,120 L240,180 L360,80 L480,160 L600,60 L720,140 L840,50 L960,130 L1080,90 L1200,150 L1320,100 L1440,170 L1440,400 Z" fill="#c5b8a8" opacity="0.4"/>
+  </svg>
+  <svg class="mountain-mid" viewBox="0 0 1440 350" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,350 L0,220 L180,140 L300,200 L420,120 L540,190 L660,100 L780,170 L900,110 L1020,180 L1140,130 L1260,190 L1380,150 L1440,200 L1440,350 Z" fill="#a89880" opacity="0.5"/>
+  </svg>
+  <svg class="mountain-near" viewBox="0 0 1440 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,300 L0,200 L200,150 L350,180 L480,130 L600,165 L720,110 L840,160 L960,125 L1080,170 L1200,140 L1320,175 L1440,150 L1440,300 Z" fill="#8a7060" opacity="0.4"/>
+    <!-- Trees silhouette -->
+    <g fill="#6a5040" opacity="0.8">
+      <rect x="50" y="155" width="6" height="40"/>
+      <polygon points="53,120 40,160 66,160"/>
+      <rect x="150" y="165" width="6" height="35"/>
+      <polygon points="153,132 140,170 166,170"/>
+      <rect x="280" y="155" width="7" height="40"/>
+      <polygon points="283,118 268,158 298,158"/>
+      <rect x="1200" y="148" width="6" height="42"/>
+      <polygon points="1203,112 1188,152 1218,152"/>
+      <rect x="1330" y="158" width="6" height="38"/>
+      <polygon points="1333,122 1318,162 1348,162"/>
+    </g>
+  </svg>
+
+  <div class="hero-content">
+    <p class="hero-jp">喫茶旅 — 日本のカフェを探索する</p>
+    <h1 class="hero-title">Find Your<br><em>Quiet Corner</em></h1>
+    <p class="hero-sub">Discover soulful cafes across Japan · From city rooftops to forest glades</p>
+    <div class="hero-scroll">
+      <div class="scroll-indicator">
+        <div class="scroll-line"></div>
+        <span>Scroll to explore</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SEARCH -->
+<section class="search-section">
+  <div class="search-wrap fade-in">
+    <input type="text" class="search-input" id="searchInput" placeholder="Search cafes, cities, vibes...">
+    <span class="search-icon">⌕</span>
+  </div>
+  <div class="filters fade-in" id="filterGroup">
+    <button class="filter-pill active" data-filter="all">All Cafes</button>
+    <button class="filter-pill" data-filter="city">City</button>
+    <button class="filter-pill" data-filter="countryside">Countryside</button>
+    <button class="filter-pill" data-filter="cozy">Cozy</button>
+    <button class="filter-pill" data-filter="rainy">Rainy Day</button>
+    <button class="filter-pill" data-filter="sunset">Sunset</button>
+    <button class="filter-pill" data-filter="nature">Nature</button>
+    <button class="filter-pill" data-filter="study">Study-friendly</button>
+  </div>
+</section>
+
+<!-- FEATURED -->
+<section id="featured">
+  <div class="section-header fade-in">
+    <div>
+      <p class="section-jp">おすすめのカフェ</p>
+      <h2 class="section-title">Featured <em>Cafes</em></h2>
+    </div>
+    <div class="section-line"></div>
+  </div>
+  <div class="cafe-grid featured stagger" id="featuredGrid">
+    <!-- Generated by JS -->
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-section">
+  <div class="marquee-wrap" id="marquee">
+    <!-- JS fills -->
+  </div>
+</div>
+
+<!-- HIDDEN GEMS -->
+<section id="hidden">
+  <div class="section-header fade-in">
+    <div>
+      <p class="section-jp">隠れた宝石</p>
+      <h2 class="section-title">Hidden <em>Gems</em></h2>
+    </div>
+    <div class="section-line"></div>
+  </div>
+  <div class="cafe-grid stagger" id="hiddenGrid"></div>
+</section>
+
+<!-- SEASONAL -->
+<section id="seasonal" class="seasonal-section">
+  <div class="seasonal-bg"></div>
+  <div class="seasonal-content">
+    <div class="section-header fade-in" style="padding: 0 0 0 0; margin: 0;">
+      <div>
+        <p class="section-jp">季節のカフェ</p>
+        <h2 class="section-title">Seasonal <em>Picks 🌸</em></h2>
+      </div>
+      <div class="section-line"></div>
+    </div>
+    <div class="seasonal-grid stagger" id="seasonalGrid" style="margin-top: 2.5rem;"></div>
+  </div>
+</section>
+
+<!-- COUNTRYSIDE -->
+<section id="countryside">
+  <div class="section-header fade-in">
+    <div>
+      <p class="section-jp">田舎のカフェ</p>
+      <h2 class="section-title">Countryside <em>Retreats</em></h2>
+    </div>
+    <div class="section-line"></div>
+  </div>
+  <div class="cafe-grid stagger" id="countrysideGrid"></div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Kissa Tabi</div>
+  <p class="footer-jp">喫茶旅 · 日本のカフェ探索</p>
+  <div class="footer-links">
+    <a href="#">About</a>
+    <a href="#">Submit a Cafe</a>
+    <a href="#">Instagram</a>
+    <a href="#">Newsletter</a>
+  </div>
+  <p style="font-family:'Noto Serif JP';font-size:0.8rem;color:rgba(253,246,236,0.3);letter-spacing:0.2em;">「静かな一杯のお茶が、魂を満たす」</p>
+  <p class="footer-copy">© 2025 Kissa Tabi · Made with ♡ for cafe wanderers</p>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modalClose">✕</button>
+    <img class="modal-img" id="modalImg" src="" alt="">
+    <div class="modal-body">
+      <p class="modal-location" id="modalLocation"></p>
+      <h2 class="modal-name" id="modalName"></h2>
+      <p class="modal-desc" id="modalDesc"></p>
+      <div class="modal-info">
+        <div class="modal-info-item"><label>Best Time</label><span id="modalTime"></span></div>
+        <div class="modal-info-item"><label>Rating</label><span id="modalRating"></span></div>
+        <div class="modal-info-item"><label>Vibe</label><span id="modalVibe"></span></div>
+        <div class="modal-info-item"><label>Category</label><span id="modalCategory"></span></div>
+      </div>
+      <div class="modal-tags" id="modalTags"></div>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-primary" id="modalNavigate">🗺 Get Directions</button>
+        <button class="modal-btn modal-btn-secondary" id="modalSaveBtn">♡ Save to Wishlist</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== DATA (Real Japanese Cafes) ====================
+const cafes = {
+  featured: [
+    {
+      id: 1,
+      name: "%Arabica Higashiyama",
+      nameJp: "% アラビカ 京都 東山",
+      location: "Higashiyama, Kyoto",
+      address: "87-5 Hoshinocho, Higashiyama Ward, Kyoto 605-0862",
+      mapQuery: "%Arabica Kyoto Higashiyama",
+      img: "https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=800&q=80",
+      desc: "Kyoto's most iconic specialty café, born in the shadow of Higashiyama's stone-paved lanes. Minimalist white walls, mountain-view espresso, and a queue that begins before the temple bells.",
+      longDesc: "Founded in Kyoto, %Arabica has become a global symbol of Japanese coffee culture. The Higashiyama branch — the original — sits steps from Yasaka Shrine. The menu is deliberately spare: espresso, latte, filter. The beans are sourced from their own farm on the slopes of Maui, Hawaii. Rated 4.5/5 on TripAdvisor with 465 reviews, ranked #101 of 9,920 restaurants in Kyoto.",
+      reviews: [
+        { text: "A must when visiting Kyoto. The latte is velvety smooth, the stone-lane setting is unreal.", author: "Sarah K., TripAdvisor" },
+        { text: "Long queue but 100% worth it. Best espresso I had in all of Japan.", author: "Marco D., Google" }
+      ],
+      tags: ["city", "aesthetic", "sunset", "nature"],
+      rating: 4.5,
+      tripAdvisorRating: "4.5/5 · 465 reviews · TripAdvisor",
+      bestTime: "Early morning before 9am",
+      vibe: "Stone-lane minimalism",
+      category: "City · Kyoto · Iconic",
+      filter: ["city", "aesthetic", "sunset"]
+    },
+    {
+      id: 2,
+      name: "Fuglen Tokyo",
+      nameJp: "フグレン東京",
+      location: "Tomigaya, Shibuya, Tokyo",
+      address: "1 Chome-16-11 Tomigaya, Shibuya City, Tokyo 151-0063",
+      mapQuery: "Fuglen Tokyo Tomigaya",
+      img: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&q=80",
+      desc: "A Norwegian café frozen in the 1960s. Vintage Scandinavian furniture, single-origin Nordic roasts, and the quiet hum of Yoyogi Park just outside.",
+      longDesc: "Founded in Oslo in 1963, Fuglen opened its first overseas location here in Tomigaya in 2012. The interior is 100% Norwegian vintage design. By day it's a serene specialty coffee bar; by night it becomes a cocktail bar. Visitors rave about the hand-brewed single-origin beans and the legendary brown cheese toast. TripAdvisor reviewers consistently praise its 'retro charm' and 'exceptional coffee.'",
+      reviews: [
+        { text: "Fuglen is laidback and equally cool in the AM as the PM. Everything served is excellent quality.", author: "TripAdvisor Reviewer" },
+        { text: "Being Norwegian and knowing Fuglen from Oslo — the coffee and décor here were just as good. Heaven.", author: "TripAdvisor Reviewer" }
+      ],
+      tags: ["city", "vintage", "cozy", "aesthetic"],
+      rating: 4.4,
+      tripAdvisorRating: "4.4/5 · TripAdvisor",
+      bestTime: "Weekday mornings or evenings",
+      vibe: "Oslo in Tokyo",
+      category: "City · Tokyo · Vintage",
+      filter: ["city", "vintage", "cozy"]
+    },
+    {
+      id: 3,
+      name: "Koffee Mameya",
+      nameJp: "コーヒーマメヤ",
+      location: "Omotesando, Tokyo",
+      address: "4-15-3 Jingumae, Shibuya City, Tokyo 150-0001",
+      mapQuery: "Koffee Mameya Omotesando Tokyo",
+      img: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=600&q=80",
+      desc: "A standing-room coffee omakase. Six people maximum. One barista who explains every bean like a sommelier explains wine.",
+      longDesc: "Koffee Mameya operates out of a sleek, hidden space off Omotesando. No seats, no food — just a curated rotating lineup of beans from Japan's finest roasters and a personal tasting consultation for every guest. Rated 4.7/5 on TripAdvisor with 27 reviews. Reviewers call it 'a truly special coffee experience' and 'among the best coffee we've had in our travels.'",
+      reviews: [
+        { text: "Like a coffee omakase — the baristas guide you through beans based on your taste. The Geisha was stunning: floral, sweet, perfectly balanced.", author: "Wanderlog Reviewer" },
+        { text: "Some of the best coffee we've had in our travels. The staff care so deeply about what they're doing.", author: "TripAdvisor · 4.7/5" }
+      ],
+      tags: ["city", "study", "aesthetic", "cozy"],
+      rating: 4.7,
+      tripAdvisorRating: "4.7/5 · 27 reviews · TripAdvisor",
+      bestTime: "Weekday afternoons",
+      vibe: "Coffee as ceremony",
+      category: "City · Tokyo · Specialty",
+      filter: ["city", "study", "cozy"]
+    }
+  ],
+  hidden: [
+    {
+      id: 4,
+      name: "Walden Woods Kyoto",
+      nameJp: "ウォールデン ウッズ 京都",
+      location: "Shimogyo, Kyoto",
+      address: "下京区栄町508-1, Kyoto 600-8194",
+      mapQuery: "Walden Woods Kyoto",
+      img: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&q=80",
+      desc: "A second-floor retreat that feels like the inside of a Thoreau poem. Zen quiet, hand-drip coffee, and walls lined with worn paperbacks.",
+      longDesc: "Walden Woods Kyoto draws its name and soul from Thoreau's famous retreat. The second floor space offers a meditative, library-like atmosphere — hushed, warm, and completely unhurried. Rated 4.6/5 on TripAdvisor with 28 reviews, ranked #556 of 9,917 restaurants in Kyoto. Open Mon–Fri 9am–7pm. The pour-over programme is meticulous, the atmosphere transformative.",
+      reviews: [
+        { text: "Exactly the kind of quiet, thoughtful café Kyoto deserves. Sat for two hours and nobody rushed me.", author: "Yelp Reviewer" },
+        { text: "A zen, meditative experience on the 2nd floor. One of the top coffee stops in all of Japan.", author: "Atlanta Coffee Shops, 2024" }
+      ],
+      tags: ["city", "study", "cozy", "rainy"],
+      rating: 4.6,
+      tripAdvisorRating: "4.6/5 · 28 reviews · TripAdvisor",
+      bestTime: "Weekday mornings",
+      vibe: "Literary stillness",
+      category: "City · Kyoto · Hidden",
+      filter: ["city", "cozy", "rainy", "study"]
+    },
+    {
+      id: 5,
+      name: "Leaves Coffee Roasters",
+      nameJp: "リーブスコーヒーロースターズ",
+      location: "Kuramae, Taito, Tokyo",
+      address: "2-6-5 Kuramae, Taito City, Tokyo 111-0051",
+      mapQuery: "Leaves Coffee Roasters Kuramae Tokyo",
+      img: "https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=600&q=80",
+      desc: "Founded by a former boxing champion turned world-class roaster. The unassuming warehouse hides some of Japan's most celebrated single-origin coffees.",
+      longDesc: "Leaves Coffee Roasters is run by Makoto Ishii, a former boxing champion who channelled his discipline into specialty coffee. Featured at World of Coffee in Athens, the Kuramae roastery is a pilgrimage for serious coffee travellers. Barista Magazine called it 'one of the most exceptional cafés in Tokyo.' The space is industrial, honest, and completely focused on the cup.",
+      reviews: [
+        { text: "Their expectations were already sky-high before I arrived — and they were met. World-class roasting.", author: "Barista Magazine, May 2024" },
+        { text: "The barista explained every single-origin option with passion. Left with a bag of beans and a huge smile.", author: "Google Reviewer" }
+      ],
+      tags: ["city", "aesthetic", "study", "cozy"],
+      rating: 4.8,
+      tripAdvisorRating: "4.8/5 · Barista Magazine Featured",
+      bestTime: "Morning to afternoon",
+      vibe: "Champion's discipline in a cup",
+      category: "City · Tokyo · Roastery",
+      filter: ["city", "cozy", "study"]
+    },
+    {
+      id: 6,
+      name: "%Arabica Arashiyama",
+      nameJp: "% アラビカ 嵐山",
+      location: "Arashiyama, Kyoto",
+      address: "3-47 Sagatenryuji Susukinobabacho, Ukyo Ward, Kyoto 616-8385",
+      mapQuery: "%Arabica Arashiyama Kyoto",
+      img: "https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=600&q=80",
+      desc: "Espresso on the banks of the Oi River, the Arashiyama mountains your backdrop. The iconic % cup is Kyoto's most photographed souvenir.",
+      longDesc: "The Arashiyama branch of %Arabica occupies a prime spot beside the Togetsu-kyo bridge with mountain views across the river. After photographing the bamboo grove, thousands of visitors make this their café stop. Rated 4.3/5 on TripAdvisor with 215 reviews, ranked #214 of 9,919 restaurants in Kyoto. Don't surprised if it takes a long queue for a cup — every reviewer agrees it's worth it.",
+      reviews: [
+        { text: "After the bamboo grove, this is the perfect stop. Mountain backdrop, great espresso.", author: "TripAdvisor · 4.3/5" },
+        { text: "The most beautiful café setting I've ever been in. The latte was exceptional.", author: "Google Reviewer" }
+      ],
+      tags: ["nature", "aesthetic", "sunset", "city"],
+      rating: 4.3,
+      tripAdvisorRating: "4.3/5 · 215 reviews · TripAdvisor",
+      bestTime: "Late afternoon golden hour",
+      vibe: "Riverside mountain calm",
+      category: "City · Kyoto · Riverside",
+      filter: ["nature", "aesthetic", "sunset", "city"]
+    }
+  ],
+  seasonal: [
+    {
+      id: 7,
+      name: "Starbucks Sannenzaka",
+      nameJp: "スターバックス 京都三年坂美術館店",
+      location: "Higashiyama, Kyoto",
+      address: "349 Masuyacho, Higashiyama Ward, Kyoto 605-0826",
+      mapQuery: "Starbucks Kyoto Sannenzaka",
+      img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80",
+      badge: "🌸 Sakura Season",
+      desc: "The world's most beautiful Starbucks — a 100-year-old machiya townhouse on Kyoto's most storied stone lane. No green signage. No modern fittings. Pure Meiji-era Japan.",
+      longDesc: "This Starbucks on Sannenzaka is housed inside a 1904 Meiji-era machiya, making it unlike any other branch in the world. The interior features tatami mat seating, irori hearths, and paper screens. During sakura season, the stone lane outside erupts in pink. Consistently listed among the most beautiful cafés in the world. No queue is too long for this experience.",
+      reviews: [
+        { text: "I've been to Starbucks all over the world. This one is in a completely different league — a 100-year-old Japanese house.", author: "TripAdvisor Reviewer" },
+        { text: "Sat on tatami mats, drinking matcha latte, watching petals fall on Sannenzaka. I didn't want to leave.", author: "Google Reviewer" }
+      ],
+      tags: ["seasonal", "vintage", "aesthetic", "city"],
+      rating: 4.6,
+      tripAdvisorRating: "4.6/5 · World's Most Beautiful Starbucks",
+      bestTime: "Early April · Cherry blossom season",
+      vibe: "Meiji Japan preserved",
+      category: "Seasonal · Spring · Iconic",
+      filter: ["city", "aesthetic", "vintage"]
+    },
+    {
+      id: 8,
+      name: "Inoda Coffee Honten",
+      nameJp: "イノダコーヒ 本店",
+      location: "Nakagyo, Kyoto",
+      address: "140 Dojin-cho, Sakaimachi-dori Sanjo Sagaru, Nakagyo Ward, Kyoto",
+      mapQuery: "Inoda Coffee Honten Kyoto",
+      img: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=600&q=80",
+      badge: "🍂 Kyoto Classic",
+      desc: "A Kyoto institution since 1947. White-jacketed staff, European-style service, and a house blend called 'Arabia Felix' that has not changed in 75 years.",
+      longDesc: "Inoda Coffee Honten has been serving Kyoto since 1947 — it predates Japan's postwar coffee boom and defines its kissaten tradition. The original branch on Sakaimachi-dori has a beautiful garden courtyard and a loyal clientele of three generations. Coffee is served with sugar and milk already added, as was the original kissaten custom. Described as 'legendary' and 'a pilgrimage spot for coffee lovers' by coffee critics worldwide.",
+      reviews: [
+        { text: "This is what a café is supposed to feel like. No rush. The Arabia Felix blend is unlike anything else.", author: "Atlanta Coffee Shops, 2024" },
+        { text: "A legendary kissaten with roots in the 1940s. Retro interiors and strong, sweet coffee — a nostalgic stop.", author: "BONGENCOFFEE Top 20 Japan" }
+      ],
+      tags: ["seasonal", "vintage", "cozy", "city"],
+      rating: 4.5,
+      tripAdvisorRating: "4.5/5 · Kyoto institution since 1947",
+      bestTime: "Morning, 7–10am",
+      vibe: "Showa-era Kyoto",
+      category: "Seasonal · Autumn · Kissaten Classic",
+      filter: ["city", "vintage", "cozy"]
+    }
+  ],
+  countryside: [
+    {
+      id: 9,
+      name: "Takamura Coffee Roasters",
+      nameJp: "タカムラコーヒーロースターズ",
+      location: "Nishi, Osaka",
+      address: "1-4-17 Enokojima, Nishi Ward, Osaka 550-0006",
+      mapQuery: "Takamura Coffee Roasters Osaka",
+      img: "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=600&q=80",
+      desc: "A converted sake warehouse the size of an aircraft hangar. Sacks of green beans from 30 countries. A wine cellar in the back. Osaka's most extraordinary café.",
+      longDesc: "Takamura Wine & Coffee Roasters occupies a vast, cathedral-like sake warehouse in Nishi Ward. It is quite possibly the largest specialty coffee shop Atlanta Coffee Shops has ever visited. The roastery, café, and fine wine retailer share one enormous space. The green bean selection spans 30+ origins; the wine list is just as serious. A genuinely one-of-a-kind destination.",
+      reviews: [
+        { text: "One of the largest coffee shops I've ever visited. The coffee and the wine selection were both exceptional.", author: "Atlanta Coffee Shops, 2024" },
+        { text: "A warehouse-style café that pairs specialty coffee with fine wine, making it a unique Osaka destination.", author: "BONGENCOFFEE Top 20 Japan" }
+      ],
+      tags: ["city", "aesthetic", "study", "nature"],
+      rating: 4.7,
+      tripAdvisorRating: "4.7/5 · Osaka's Best Roastery",
+      bestTime: "Afternoon, 2–5pm",
+      vibe: "Industrial cathedral of coffee",
+      category: "City · Osaka · Roastery",
+      filter: ["city", "aesthetic", "study"]
+    },
+    {
+      id: 10,
+      name: "Onibus Coffee Nakameguro",
+      nameJp: "オニバスコーヒー 中目黒店",
+      location: "Nakameguro, Tokyo",
+      address: "2-14-1 Kamimeguro, Meguro City, Tokyo 153-0051",
+      mapQuery: "Onibus Coffee Nakameguro Tokyo",
+      img: "https://images.unsplash.com/photo-1600093463592-8e36ae95ef56?w=600&q=80",
+      desc: "Tokyo's most Instagrammed café sits under a rail bridge on the Meguro River. Minimal, precise, and impossibly photogenic.",
+      longDesc: "Onibus Coffee is built directly beneath an elevated train line in Nakameguro, with seating that looks out over the Meguro River canal — lined with cherry trees in spring. The café has brought international attention to Tokyo's modern coffee movement through its focus on traceability and small-batch roasting. The viral 'train-view' second floor draws visitors worldwide. Reviewers call it 'aesthetic and genuinely good coffee.'",
+      reviews: [
+        { text: "Head upstairs for the viral train view that has been circulating on social media. And the coffee is actually great too.", author: "Google Reviewer" },
+        { text: "Focused on traceability and small-batch roasting. Onibus brings international attention to Tokyo's coffee scene.", author: "BONGENCOFFEE Top 20 Japan" }
+      ],
+      tags: ["city", "aesthetic", "nature", "sunset"],
+      rating: 4.6,
+      tripAdvisorRating: "4.6/5 · Google Reviews",
+      bestTime: "Cherry blossom season · Sunset",
+      vibe: "Canal-side minimalism",
+      category: "City · Tokyo · Scenic",
+      filter: ["city", "aesthetic", "nature", "sunset"]
+    },
+    {
+      id: 11,
+      name: "Goodman Roaster Kyoto",
+      nameJp: "グッドマンロースター 京都",
+      location: "Shimogyo, Kyoto",
+      address: "Yadacho, Shimogyo Ward, Kyoto 600-8442",
+      mapQuery: "Goodman Roaster Kyoto",
+      img: "https://images.unsplash.com/photo-1525610553991-2bede1a236e2?w=600&q=80",
+      desc: "A Tokyo native bought a farm in Taiwan and a Diedrich roaster in Kyoto. The result: the rarest coffee in the city.",
+      longDesc: "Goodman Roaster Kyoto was founded in 2020 by Atsuomi, a Tokyo native who discovered Alishan mountain coffee in Taiwan after years running cafés in Asia. He bought a 5kg Diedrich roaster and opened in Kyoto's Shimogyo ward. Sprudge Magazine called it 'a gem in Nakagyo' and praised the 'pleasantly cherry-forward and oolong-flavoured' Taiwan Alishan hand drip. A true specialist's café.",
+      reviews: [
+        { text: "A gem. The Taiwan Alishan hand drip was pleasantly cherry-forward and oolong-flavoured — I'd never heard of Alishan coffee before.", author: "Sprudge Magazine, 2024" },
+        { text: "Tiny, serious, and completely focused. The kind of hidden roastery Kyoto excels at hiding.", author: "Google Reviewer" }
+      ],
+      tags: ["city", "cozy", "study", "rainy"],
+      rating: 4.7,
+      tripAdvisorRating: "4.7/5 · Sprudge Magazine Featured 2024",
+      bestTime: "Weekday afternoons",
+      vibe: "Roaster's secret",
+      category: "City · Kyoto · Specialty",
+      filter: ["city", "cozy", "study", "rainy"]
+    }
+  ]
+};
+
+const favorites = new Set();
+let activeFilter = "all";
+let searchQuery = "";
+
+// ==================== RENDER CARDS ====================
+function createCard(cafe, large = false) {
+  const stars = "★".repeat(Math.floor(cafe.rating)) + (cafe.rating % 1 ? "½" : "");
+  return `
+    <div class="cafe-card" data-id="${cafe.id}" data-filter='${JSON.stringify(cafe.filter)}'>
+      <div class="card-img-wrap">
+        <img class="card-img" src="${cafe.img}" alt="${cafe.name}" loading="lazy">
+        <div class="card-overlay"></div>
+        <button class="card-save" data-id="${cafe.id}" onclick="toggleSave(event,${cafe.id})">
+          ${favorites.has(cafe.id) ? "♥" : "♡"}
+        </button>
+        <div class="card-tags-overlay">
+          ${cafe.tags.slice(0,3).map(t=>`<span class="tag">${t}</span>`).join("")}
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-location">${cafe.location}</p>
+        <h3 class="card-name">${cafe.name}</h3>
+        <p class="card-desc">${cafe.desc}</p>
+        <div class="card-meta">
+          <div class="card-rating">${stars} <span style="color:var(--ink)">${cafe.rating}</span></div>
+          <span class="card-time">Best: ${cafe.bestTime.split(",")[0]}</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn-explore" onclick="openModal(${cafe.id})">Explore →</button>
+          <button class="btn-navigate" onclick="navigate('${cafe.mapQuery || cafe.location}')">🗺 Map</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderAll() {
+  const allCafes = [...cafes.featured, ...cafes.hidden, ...cafes.countryside, ...cafes.seasonal];
+
+  function matchFilter(cafe) {
+    const q = searchQuery.toLowerCase();
+    const matchSearch = !q ||
+      cafe.name.toLowerCase().includes(q) ||
+      cafe.location.toLowerCase().includes(q) ||
+      cafe.tags.some(t => t.includes(q)) ||
+      cafe.desc.toLowerCase().includes(q);
+    const matchCat = activeFilter === "all" || cafe.filter.includes(activeFilter);
+    return matchSearch && matchCat;
+  }
+
+  const renderGrid = (el, list) => {
+    const filtered = list.filter(matchFilter);
+    el.innerHTML = filtered.length
+      ? filtered.map((c,i) => createCard(c, i===0)).join("")
+      : `<p style="color:var(--bark);opacity:0.5;padding:2rem;font-style:italic">No cafes match your search…</p>`;
+  };
+
+  renderGrid(document.getElementById("featuredGrid"), cafes.featured);
+  renderGrid(document.getElementById("hiddenGrid"), cafes.hidden);
+  renderGrid(document.getElementById("countrysideGrid"), cafes.countryside);
+
+  // Seasonal cards
+  const sg = document.getElementById("seasonalGrid");
+  const filtered = cafes.seasonal.filter(matchFilter);
+  sg.innerHTML = filtered.map(c => `
+    <div class="seasonal-card" onclick="openModal(${c.id})">
+      <img class="seasonal-card-img" src="${c.img}" alt="${c.name}" loading="lazy">
+      <div class="seasonal-card-body">
+        <div class="seasonal-badge">${c.badge}</div>
+        <h3 class="card-name">${c.name}</h3>
+        <p class="card-desc">${c.desc}</p>
+        <div class="card-meta">
+          <div class="card-rating">★ ${c.rating}</div>
+          <span class="card-time">${c.location}</span>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+// ==================== MARQUEE ====================
+function buildMarquee() {
+  const names = [...cafes.featured, ...cafes.hidden, ...cafes.countryside, ...cafes.seasonal]
+    .map(c => c.name);
+  const items = [...names, ...names].map(n =>
+    `<span class="marquee-item"><span class="marquee-dot"></span>${n}</span>`
+  ).join("");
+  const m = document.getElementById("marquee");
+  m.innerHTML = items + items;
+}
+
+// ==================== MODAL ====================
+function openModal(id) {
+  const all = [...cafes.featured, ...cafes.hidden, ...cafes.countryside, ...cafes.seasonal];
+  const cafe = all.find(c => c.id === id);
+  if (!cafe) return;
+
+  document.getElementById("modalImg").src = cafe.img;
+  document.getElementById("modalLocation").textContent = cafe.location;
+  document.getElementById("modalName").textContent = cafe.name + " · " + cafe.nameJp;
+  document.getElementById("modalDesc").textContent = cafe.longDesc || cafe.desc;
+  document.getElementById("modalTime").textContent = cafe.bestTime;
+  document.getElementById("modalRating").textContent = "★ " + cafe.rating + "  ·  " + (cafe.tripAdvisorRating || "");
+  document.getElementById("modalVibe").textContent = cafe.vibe;
+  document.getElementById("modalCategory").textContent = cafe.category;
+  const reviewsHtml = (cafe.reviews || []).map(r =>
+    `<blockquote style="border-left:3px solid var(--blush);padding-left:1rem;margin:0.8rem 0;font-size:0.82rem;color:rgba(42,31,26,0.7);line-height:1.6;"><p style="font-style:italic;margin-bottom:0.3rem">"${r.text}"</p><cite style="font-size:0.7rem;color:var(--blush);font-style:normal">— ${r.author}</cite></blockquote>`
+  ).join("");
+  document.getElementById("modalTags").innerHTML =
+    `<div style="margin-bottom:1rem">${reviewsHtml}</div>` +
+    cafe.tags.map(t => `<span class="modal-tag">${t}</span>`).join("");
+
+  const saveBtn = document.getElementById("modalSaveBtn");
+  saveBtn.textContent = favorites.has(id) ? "♥ Saved!" : "♡ Save to Wishlist";
+  saveBtn.onclick = () => {
+    if (favorites.has(id)) { favorites.delete(id); saveBtn.textContent = "♡ Save to Wishlist"; }
+    else { favorites.add(id); saveBtn.textContent = "♥ Saved!"; }
+    renderAll();
+  };
+  document.getElementById("modalNavigate").onclick = () => navigate(cafe.mapQuery || cafe.name + " " + cafe.location);
+  document.getElementById("modalOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function closeModal() {
+  document.getElementById("modalOverlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
+document.getElementById("modalClose").onclick = closeModal;
+document.getElementById("modalOverlay").onclick = e => { if (e.target === e.currentTarget) closeModal(); };
+
+// ==================== SAVE ====================
+function toggleSave(e, id) {
+  e.stopPropagation();
+  if (favorites.has(id)) favorites.delete(id);
+  else favorites.add(id);
+  renderAll();
+}
+
+// ==================== NAVIGATE ====================
+function navigate(location) {
+  const q = encodeURIComponent(location);
+  window.open(`https://www.google.com/maps/search/${q}`, "_blank");
+}
+
+// ==================== FILTERS ====================
+document.getElementById("filterGroup").addEventListener("click", e => {
+  if (!e.target.classList.contains("filter-pill")) return;
+  document.querySelectorAll(".filter-pill").forEach(p => p.classList.remove("active"));
+  e.target.classList.add("active");
+  activeFilter = e.target.dataset.filter;
+  renderAll();
+});
+document.getElementById("searchInput").addEventListener("input", e => {
+  searchQuery = e.target.value;
+  renderAll();
+});
+
+// ==================== CURSOR ====================
+const cursor = document.getElementById("cursor");
+const cursorRing = document.getElementById("cursorRing");
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener("mousemove", e => { mx = e.clientX; my = e.clientY; });
+function animateCursor() {
+  cursor.style.left = mx + "px"; cursor.style.top = my + "px";
+  rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+  cursorRing.style.left = rx + "px"; cursorRing.style.top = ry + "px";
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+// ==================== PARTICLE CANVAS ====================
+const canvas = document.getElementById("particle-canvas");
+const ctx = canvas.getContext("2d");
+let particles = [];
+let particleMode = "petals"; // petals | rain | dust | stars
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+function randomPetal() {
+  return {
+    x: Math.random() * canvas.width,
+    y: -20,
+    size: Math.random() * 8 + 4,
+    speedY: Math.random() * 1.5 + 0.8,
+    speedX: Math.random() * 1.2 - 0.6,
+    rotation: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() - 0.5) * 0.04,
+    alpha: Math.random() * 0.5 + 0.3,
+    color: `hsl(${Math.random() * 20 + 340}, 80%, ${Math.random() * 20 + 75}%)`
+  };
+}
+
+function spawnParticles() {
+  if (particles.length < 40) particles.push(randomPetal());
+}
+
+function drawPetal(p) {
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(p.rotation);
+  ctx.globalAlpha = p.alpha;
+  ctx.fillStyle = p.color;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, p.size, p.size * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  spawnParticles();
+  particles = particles.filter(p => p.y < canvas.height + 20);
+  for (const p of particles) {
+    p.x += p.speedX + Math.sin(p.y * 0.02) * 0.4;
+    p.y += p.speedY;
+    p.rotation += p.rotSpeed;
+    drawPetal(p);
+  }
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// ==================== PARALLAX & SKY ====================
+const skies = [
+  document.getElementById("skyDawn"),
+  document.getElementById("skyDay"),
+  document.getElementById("skySunset"),
+  document.getElementById("skyNight")
+];
+const skyDots = document.querySelectorAll(".sky-dot");
+const mountainFar = document.querySelector(".mountain-far");
+const mountainMid = document.querySelector(".mountain-mid");
+const mountainNear = document.querySelector(".mountain-near");
+const heroEl = document.getElementById("hero");
+
+let currentPhase = 0;
+
+function setSky(phase) {
+  if (phase === currentPhase) return;
+  currentPhase = phase;
+  skies.forEach((s, i) => s.style.opacity = i === phase ? 1 : 0);
+  skyDots.forEach((d, i) => d.classList.toggle("active", i === phase));
+  // Change particles
+  if (phase === 3) {
+    particles = [];
+    particleMode = "stars";
+  } else if (phase === 2) {
+    particleMode = "dust";
+  } else {
+    particleMode = "petals";
+  }
+}
+
+window.addEventListener("scroll", () => {
+  const scrollY = window.scrollY;
+  const heroH = heroEl.offsetHeight;
+  const progress = Math.min(scrollY / heroH, 1);
+
+  // Parallax
+  mountainFar.style.transform = `translateY(${scrollY * 0.15}px)`;
+  mountainMid.style.transform = `translateY(${scrollY * 0.28}px)`;
+  mountainNear.style.transform = `translateY(${scrollY * 0.45}px)`;
+
+  // Sky phases based on page scroll
+  const docH = document.body.scrollHeight - window.innerHeight;
+  const totalProgress = scrollY / docH;
+  let phase = 0;
+  if (totalProgress > 0.75) phase = 3;
+  else if (totalProgress > 0.5) phase = 2;
+  else if (totalProgress > 0.2) phase = 1;
+  setSky(phase);
+
+  // Nav scroll
+  document.getElementById("mainNav").classList.toggle("scrolled", scrollY > 60);
+
+  // Fade-in on scroll
+  document.querySelectorAll(".fade-in, .stagger").forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.88) el.classList.add("visible");
+  });
+});
+
+// Sky dots click
+skyDots.forEach(dot => {
+  dot.addEventListener("click", () => setSky(parseInt(dot.dataset.phase)));
+});
+
+// ==================== MUSIC ====================
+const music = document.getElementById("bgMusic");
+const musicBtn = document.getElementById("musicToggle");
+const toast = document.getElementById("audioToast");
+let playing = false;
+
+musicBtn.addEventListener("click", () => {
+  if (playing) {
+    music.pause(); playing = false;
+    musicBtn.classList.remove("playing");
+    musicBtn.textContent = "♪ Ambience";
+  } else {
+    music.play().catch(() => {});
+    playing = true;
+    musicBtn.classList.add("playing");
+    musicBtn.textContent = "◼ Playing";
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 3000);
+  }
+});
+
+// ==================== INIT ====================
+renderAll();
+buildMarquee();
+
+// Initial fade-in trigger
+setTimeout(() => {
+  document.querySelectorAll(".fade-in, .stagger").forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.9) el.classList.add("visible");
+  });
+}, 200);
+</script>
+</body>
+</html>
